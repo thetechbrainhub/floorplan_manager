@@ -58,19 +58,33 @@ class SVGHandler {
         if (!checkSVGJS()) throw new Error('SVG.js not loaded. Please reload the page.');
 
         const doc = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
-        if (!doc.querySelector('svg')) throw new Error('Invalid SVG file');
+        const rootSvg = doc.querySelector('svg');
+        if (!rootSvg) throw new Error('Invalid SVG file');
+
+        // Read dimensions from the root SVG element BEFORE embedding.
+        // Using bbox() after embedding misreads nested SVG files (e.g. files that
+        // were saved multiple times), because bbox() measures the innermost layer
+        // rather than the intended canvas. Reading from the root SVG attributes is
+        // always correct regardless of nesting depth.
+        const vb = rootSvg.getAttribute('viewBox');
+        if (vb) {
+            const parts = vb.trim().split(/[\s,]+/).map(Number);
+            this.originalX      = parts[0] || 0;
+            this.originalY      = parts[1] || 0;
+            this.originalWidth  = parts[2] || 1200;
+            this.originalHeight = parts[3] || 800;
+        } else {
+            this.originalWidth  = parseFloat(rootSvg.getAttribute('width'))  || 1200;
+            this.originalHeight = parseFloat(rootSvg.getAttribute('height')) || 800;
+            this.originalX = 0;
+            this.originalY = 0;
+        }
 
         const canvas = document.getElementById('svg-canvas');
         canvas.innerHTML = '';
 
         this.svg = SVG().addTo('#svg-canvas').size('100%', '100%');
         this.svg.svg(svgContent);
-
-        const bbox = this.svg.bbox();
-        this.originalWidth  = bbox.width  || 1200;
-        this.originalHeight = bbox.height || 800;
-        this.originalX      = bbox.x      || 0;
-        this.originalY      = bbox.y      || 0;
 
         this.svg.viewbox(this.originalX, this.originalY, this.originalWidth, this.originalHeight);
         this.setupPanning();
@@ -104,18 +118,115 @@ class SVGHandler {
         canvas.addEventListener('mouseleave', () => { isPanning = false; canvas.style.cursor = ''; });
         canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
-            e.deltaY < 0 ? this.zoomIn() : this.zoomOut();
+            // Scale deltaY to pixels regardless of deltaMode so the zoom amount
+            // is proportional to actual scroll distance (smooth on trackpads,
+            // one grid square ≈ one mouse-wheel notch at typical settings).
+            let delta = e.deltaY;
+            if (e.deltaMode === 1) delta *= 20;   // lines → pixels
+            if (e.deltaMode === 2) delta *= 800;  // pages → pixels
+            const factor = Math.exp(-delta * 0.003);
+            this.scale = Math.max(0.2, Math.min(5, this.scale * factor));
+            this.applyTransform();
+            this._updateAllHandles();
             window.dispatchEvent(new CustomEvent('zoomChanged'));
         });
     }
 
-    zoomIn()  { this.scale = Math.min(this.scale * 1.2, 5);  this.applyTransform(); }
-    zoomOut() { this.scale = Math.max(this.scale / 1.2, 0.2); this.applyTransform(); }
+    zoomIn()  { this.scale = Math.min(this.scale * 1.05, 5);  this.applyTransform(); this._updateAllHandles(); }
+    zoomOut() { this.scale = Math.max(this.scale / 1.05, 0.2); this.applyTransform(); this._updateAllHandles(); }
 
     resetView() {
         this.scale = 1; this.panX = 0; this.panY = 0;
-        if (this.svg && this.originalWidth)
-            this.svg.viewbox(this.originalX, this.originalY, this.originalWidth, this.originalHeight);
+        if (!this.svg) return;
+
+        const p  = 20;
+        const bb = this._getVisibleBBox();
+
+        if (bb && bb.width > 10 && bb.height > 10) {
+            // Scale to fit the visible content (preserve original aspect ratio,
+            // pick the tighter axis so nothing is clipped).
+            this.scale = Math.min(
+                this.originalWidth  / (bb.width  + p * 2),
+                this.originalHeight / (bb.height + p * 2)
+            );
+            // Pan so the centre of visible content is centred in the view.
+            // applyTransform() centres on (origCX + panX, origCY + panY).
+            const origCX = this.originalX + this.originalWidth  / 2;
+            const origCY = this.originalY + this.originalHeight / 2;
+            this.panX = (bb.x + bb.width  / 2) - origCX;
+            this.panY = (bb.y + bb.height / 2) - origCY;
+        }
+
+        // All view state is now in scale/panX/panY — applyTransform() is the
+        // single source of truth, so panning after Fit no longer jumps back.
+        this.applyTransform();
+        this._updateAllHandles();
+    }
+
+    /**
+     * Returns the union bounding box (in the loaded SVG's own coordinate system)
+     * of every element that has a visible fill or stroke.
+     * Elements with fill="none"/stroke="none" or that are hidden/transparent
+     * are skipped — this avoids invisible background geometry (common in draw.io
+     * exports) inflating the result.
+     *
+     * getCTM() on each shape element accumulates all parent <g> transforms and
+     * maps local coordinates to the nearest ancestor <svg> viewport space
+     * (= the loaded file's coordinate system, matching originalX/Y/Width/Height).
+     */
+    _getVisibleBBox() {
+        const contentSvg = this.svg.node.querySelector('svg') || this.svg.node;
+        const shapes = contentSvg.querySelectorAll(
+            'rect,circle,ellipse,path,polygon,polyline,line,text,image,use'
+        );
+
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        let found = false;
+
+        const isTransparent = c =>
+            !c || c === 'none' || c === 'rgba(0, 0, 0, 0)' || /rgba\([^)]+,\s*0\)$/.test(c);
+
+        shapes.forEach(el => {
+            try {
+                if (el.classList.contains('resize-handle')) return;
+
+                const cs = window.getComputedStyle(el);
+                if (cs.display === 'none' || cs.visibility === 'hidden') return;
+                if (parseFloat(cs.opacity) <= 0) return;
+
+                const fill   = cs.fill   || '';
+                const stroke = cs.stroke || '';
+                const fo     = parseFloat(cs.fillOpacity   || 1);
+                const so     = parseFloat(cs.strokeOpacity || 1);
+
+                const hasFill   = !isTransparent(fill)   && fo > 0;
+                const hasStroke = !isTransparent(stroke) && so > 0;
+                if (!hasFill && !hasStroke) return;
+
+                const bb = el.getBBox();
+                if (bb.width <= 0 || bb.height <= 0) return;
+
+                const ctm = el.getCTM();
+                if (!ctm) return;
+
+                [[bb.x, bb.y], [bb.x + bb.width, bb.y],
+                 [bb.x, bb.y + bb.height], [bb.x + bb.width, bb.y + bb.height]
+                ].forEach(([x, y]) => {
+                    const tx = ctm.a * x + ctm.c * y + ctm.e;
+                    const ty = ctm.b * x + ctm.d * y + ctm.f;
+                    minX = Math.min(minX, tx); minY = Math.min(minY, ty);
+                    maxX = Math.max(maxX, tx); maxY = Math.max(maxY, ty);
+                });
+                found = true;
+            } catch (e) { /* skip inaccessible elements */ }
+        });
+
+        return found ? { x: minX, y: minY, width: maxX - minX, height: maxY - minY } : null;
+    }
+
+    /** Recalculate handle pixel size for all devices after a zoom change. */
+    _updateAllHandles() {
+        this.devices.forEach(device => this._updateHandlePosition(device));
     }
 
     applyTransform() {
@@ -241,15 +352,27 @@ class SVGHandler {
         this._addResizeHandle(device);
     }
 
+    /**
+     * Handle size in SVG units.
+     * - 28/zoomScale targets a constant ~28px on screen at any zoom level.
+     * - Capped at 30*deviceScale so the handle never exceeds the indicator tile.
+     * Result: fixed screen size when device is large; shrinks with device when device is small.
+     */
+    _handleSize(device) {
+        const zs = this.scale || 1;
+        const sc = device.scale || 1;
+        return Math.min(28 / zs, 30 * sc);
+    }
+
     _addResizeHandle(device) {
         if (device.indicators.length === 0) return;
-        const HS = 28; // handle size in SVG units
+        const HS = this._handleSize(device);
 
         const last = device.indicators[device.indicators.length - 1];
         const handle = device.element.rect(HS, HS)
             .fill('#10D1CD').stroke('#ffffff').stroke({ width: 2 }).radius(2)
-            .move(Math.max(0, last.element.x() + last.element.width() - HS),
-                  last.element.y() + last.element.height() - HS)
+            .move(last.element.x() + last.element.width(),
+                  last.element.y() + last.element.height())
             .css({ cursor: 'nwse-resize' }).addClass('resize-handle');
         handle.front();
 
@@ -290,8 +413,8 @@ class SVGHandler {
 
     /** Scale all indicators (in their current visual order) and reposition handle. */
     _applyScale(device, newScale, handle) {
-        const HS = 28;
         device.scale = newScale;
+        const HS = this._handleSize(device);
 
         device.indicators.forEach((ind, arrayIdx) => {
             ind.element.size(30 * newScale, 30 * newScale)
@@ -302,18 +425,18 @@ class SVGHandler {
         const h = handle || device.element.findOne('.resize-handle');
         if (h) {
             const n = device.indicators.length;
-            // size() resets handle to fixed HS; y-formula: bottom of last tile = (35n-5)*scale
-            h.size(HS, HS).move(Math.max(0, 30 * newScale - HS), (35 * n - 5) * newScale - HS).front();
+            // place handle flush outside the tile's bottom-right corner
+            h.size(HS, HS).move(30 * newScale, (35 * n - 5) * newScale).front();
         }
     }
 
     _updateHandlePosition(device) {
-        const HS = 28;
+        const HS = this._handleSize(device);
         const h  = device.element.findOne('.resize-handle');
         if (!h || device.indicators.length === 0) return;
         const sc = device.scale || 1;
         const n  = device.indicators.length;
-        h.size(HS, HS).move(Math.max(0, 30 * sc - HS), (35 * n - 5) * sc - HS).front();
+        h.size(HS, HS).move(30 * sc, (35 * n - 5) * sc).front();
     }
 
     // ─── CRUD ─────────────────────────────────────────────────────────────────
@@ -527,14 +650,20 @@ class SVGHandler {
 
     exportSVG() {
         if (!this.svg) return null;
-        const clone = this.svg.node.cloneNode(true);
+
+        // Export the INNER svg element (the loaded file content), not the SVG.js
+        // container — otherwise each save wraps the content in another <svg> layer.
+        const inner = this.svg.node.querySelector('svg') || this.svg.node;
+        const clone = inner.cloneNode(true);
         clone.querySelectorAll('.resize-handle').forEach(h => h.remove());
 
-        const bbox = this.svg.bbox();
+        // Responsive sizing: width="100%" lets the container determine the size;
+        // the viewBox defines the aspect ratio and coordinate system.
         const p = 20;
-        clone.setAttribute('viewBox', `${bbox.x - p} ${bbox.y - p} ${bbox.width + p*2} ${bbox.height + p*2}`);
-        clone.setAttribute('width',  bbox.width  + p*2);
-        clone.setAttribute('height', bbox.height + p*2);
+        clone.setAttribute('viewBox',
+            `${this.originalX - p} ${this.originalY - p} ${this.originalWidth + p*2} ${this.originalHeight + p*2}`);
+        clone.setAttribute('width',  '100%');
+        clone.removeAttribute('height');
 
         return new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml' });
     }
