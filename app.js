@@ -16,6 +16,8 @@ class App {
         this.setupEventListeners();
         this.updateUI();
         this.updateStatus('Ready – load an SVG file to start');
+        const vEl = document.getElementById('app-version-label');
+        if (vEl) vEl.textContent = 'v' + APP_VERSION;
     }
 
     // ─── Event wiring ────────────────────────────────────────────────────────

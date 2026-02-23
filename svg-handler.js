@@ -6,6 +6,9 @@
  * PROPRIETARY AND CONFIDENTIAL
  */
 
+/** Application version – single source of truth, shown in the status bar. */
+const APP_VERSION = '2.2';
+
 /** Default OFF-state color (same for all indicators) */
 const INDICATOR_PRESET_OFF_COLOR = '#333333';
 
