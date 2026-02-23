@@ -1,0 +1,464 @@
+/**
+ * NGIS Floorplan Editor - Styles
+ * 
+ * Copyright (c) 2025 NGIS PTE LTD. All rights reserved.
+ * Author: Christian Zeh
+ * Contact: info@ng-is.com
+ * 
+ * PROPRIETARY AND CONFIDENTIAL
+ * 
+ * This software and associated documentation files (the "Software") are the 
+ * exclusive property of NGIS PTE LTD. Unauthorized copying, modification, 
+ * distribution, or use of this Software, via any medium, is strictly prohibited 
+ * without express written permission from NGIS PTE LTD.
+ * 
+ * The Software is provided "as is", without warranty of any kind, express or 
+ * implied, including but not limited to the warranties of merchantability, 
+ * fitness for a particular purpose and noninfringement.
+ * 
+ * Violation of this license may result in legal action.
+ */
+
+/* ===== GLOBAL STYLES ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: #1e1e1e;
+    color: #e0e0e0;
+    overflow: hidden;
+}
+
+/* ===== CONTAINER ===== */
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* ===== HEADER ===== */
+header {
+    background: linear-gradient(135deg, #10D1CD 0%, #0BA8A4 100%);
+    padding: 1.5rem 2rem;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+header h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+header p {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.9);
+}
+
+/* ===== TOOLBAR ===== */
+.toolbar {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0.75rem 2rem;
+    background: #2d2d2d;
+    border-bottom: 2px solid #3d3d3d;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    align-items: flex-start;
+}
+
+.toolbar-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.toolbar-section h3 {
+    font-size: 0.75rem;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+}
+
+.toolbar-section > div {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    background: #3d3d3d;
+    color: #e0e0e0;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn:hover:not(:disabled) {
+    background: #4d4d4d;
+    transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #10D1CD 0%, #0BA8A4 100%);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #1BE5E1 0%, #0DBFBB 100%);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+    background: linear-gradient(135deg, #1aac9e 0%, #4fff8f 100%);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: linear-gradient(135deg, #ff1a8a 0%, #ff7a1a 100%);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+    color: white;
+}
+
+.btn-warning:hover:not(:disabled) {
+    background: linear-gradient(135deg, #fb923c 0%, #fb7185 100%);
+}
+
+.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+}
+
+.btn-block {
+    width: 100%;
+}
+
+/* ===== MAIN CONTENT ===== */
+.main-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ===== SIDEBARS ===== */
+.sidebar {
+    width: 280px;
+    background: #2d2d2d;
+    padding: 1.5rem;
+    overflow-y: auto;
+    border-right: 2px solid #3d3d3d;
+}
+
+.sidebar h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: #fff;
+}
+
+.sidebar h4 {
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+    color: #aaa;
+}
+
+.sidebar-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #3d3d3d;
+}
+
+/* ===== DEVICE LIST ===== */
+.device-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.device-item {
+    padding: 0.75rem;
+    background: #3d3d3d;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+
+.device-item:hover {
+    background: #4d4d4d;
+    border-color: #10D1CD;
+}
+
+.device-item.selected {
+    background: #4d4d4d;
+    border-color: #10D1CD;
+    box-shadow: 0 0 10px rgba(16, 209, 205, 0.3);
+}
+
+.device-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.device-name {
+    font-weight: bold;
+    color: #fff;
+}
+
+.device-id {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.device-status {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #555;
+}
+
+/* ===== PROPERTIES PANEL ===== */
+.properties-panel {
+    border-right: none;
+    border-left: 2px solid #3d3d3d;
+}
+
+.properties-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.property-group {
+    background: #3d3d3d;
+    padding: 1rem;
+    border-radius: 6px;
+}
+
+.property-group h4 {
+    margin-bottom: 0.75rem;
+    color: #fff;
+}
+
+.property-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+}
+
+.property-row:last-child {
+    margin-bottom: 0;
+}
+
+.property-label {
+    font-size: 0.75rem;
+    color: #aaa;
+    text-transform: uppercase;
+}
+
+.property-value {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+input[type="text"],
+input[type="number"] {
+    width: 100%;
+    padding: 0.5rem;
+    background: #2d2d2d;
+    border: 1px solid #4d4d4d;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-size: 0.875rem;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    outline: none;
+    border-color: #10D1CD;
+}
+
+input[type="color"] {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* ===== CANVAS AREA ===== */
+.canvas-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #1e1e1e;
+    position: relative;
+    overflow: hidden;
+}
+
+.svg-canvas {
+    flex: 1;
+    position: relative;
+    overflow: auto;
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.svg-canvas.grid-hidden {
+    background-image: none;
+}
+
+.canvas-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.placeholder-content {
+    text-align: center;
+    padding: 2rem;
+}
+
+.placeholder-content h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #fff;
+}
+
+.placeholder-content p {
+    color: #888;
+    margin-bottom: 2rem;
+}
+
+.placeholder {
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    padding: 2rem;
+}
+
+/* ===== STATUS BAR ===== */
+.status-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 2rem;
+    background: #2d2d2d;
+    border-top: 2px solid #3d3d3d;
+    font-size: 0.875rem;
+    color: #888;
+}
+
+/* ===== SVG STYLES ===== */
+#svg-container {
+    width: 100%;
+    height: 100%;
+}
+
+.device-group {
+    cursor: move;
+}
+
+.device-group:hover .device-tile {
+    stroke: #667eea;
+    stroke-width: 3;
+}
+
+.device-group.selected .device-tile {
+    stroke: #667eea;
+    stroke-width: 3;
+    filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.5));
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #2d2d2d;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4d4d4d;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #5d5d5d;
+}
+
+/* ===== INDICATOR REORDER ===== */
+.indicator-row {
+    transition: border-color 0.15s, opacity 0.15s;
+}
+.indicator-row.drag-over {
+    border-color: #10D1CD !important;
+    background: #1a3a3a !important;
+}
+.drag-handle {
+    font-size: 1.1rem;
+    line-height: 1;
+    color: #555;
+    cursor: grab;
+    user-select: none;
+    transition: color 0.15s;
+}
+.drag-handle:hover { color: #10D1CD; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+    .sidebar {
+        width: 240px;
+    }
+}
+
+@media (max-width: 768px) {
+    .toolbar {
+        padding: 0.5rem 1rem;
+    }
+    
+    .sidebar {
+        width: 200px;
+        padding: 1rem;
+    }
+}

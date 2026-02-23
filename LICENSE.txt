@@ -1,0 +1,64 @@
+PROPRIETARY SOFTWARE LICENSE
+
+NGIS Floorplan Editor
+Copyright (c) 2025 NGIS PTE LTD. All rights reserved.
+
+Author: Christian Zeh
+Contact: info@ng-is.com
+
+================================================================================
+
+PROPRIETARY AND CONFIDENTIAL
+
+This software and associated documentation files (the "Software") are the 
+exclusive property of NGIS PTE LTD.
+
+GRANT OF LICENSE:
+NO LICENSE IS GRANTED. All rights are reserved by NGIS PTE LTD.
+
+RESTRICTIONS:
+You may NOT:
+1. Copy, reproduce, or duplicate the Software in any form
+2. Modify, adapt, translate, or create derivative works of the Software
+3. Reverse engineer, decompile, or disassemble the Software
+4. Distribute, sublicense, rent, lease, or lend the Software
+5. Remove or alter any copyright, trademark, or proprietary notices
+6. Use the Software for any purpose without express written permission
+
+OWNERSHIP:
+NGIS PTE LTD retains all right, title, and interest in and to the Software, 
+including all intellectual property rights therein.
+
+UNAUTHORIZED USE:
+Any unauthorized copying, modification, distribution, or use of this Software 
+is strictly prohibited and may result in severe civil and criminal penalties.
+
+ENFORCEMENT:
+NGIS PTE LTD reserves the right to pursue all available legal remedies for 
+any violation of this license, including but not limited to:
+- Injunctive relief
+- Monetary damages
+- Recovery of attorney's fees and costs
+- Criminal prosecution where applicable
+
+DISCLAIMER:
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
+NGIS PTE LTD BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER 
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+JURISDICTION:
+This license shall be governed by and construed in accordance with the laws 
+of Singapore, without regard to its conflict of law provisions. Any disputes 
+arising under this license shall be subject to the exclusive jurisdiction of 
+the courts of Singapore.
+
+================================================================================
+
+For licensing inquiries, please contact:
+NGIS PTE LTD
+Email: info@ng-is.com
+
+Last Updated: January 2025

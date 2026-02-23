@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGIS Floor Plan Editor</title>
+    <!--
+    /**
+     * NGIS Floorplan Editor
+     * 
+     * Copyright (c) 2025 NGIS PTE LTD. All rights reserved.
+     * Author: Christian Zeh
+     * Contact: info@ng-is.com
+     * 
+     * PROPRIETARY AND CONFIDENTIAL
+     * 
+     * This software and associated documentation files (the "Software") are the 
+     * exclusive property of NGIS PTE LTD. Unauthorized copying, modification, 
+     * distribution, or use of this Software, via any medium, is strictly prohibited 
+     * without express written permission from NGIS PTE LTD.
+     * 
+     * The Software is provided "as is", without warranty of any kind, express or 
+     * implied, including but not limited to the warranties of merchantability, 
+     * fitness for a particular purpose and noninfringement.
+     * 
+     * Violation of this license may result in legal action.
+     */
+    -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>NGIS Floor Plan Editor</h1>
+            <p>Edit your floorplan with andon status indicators</p>
+        </header>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-section">
+                <h3>📁 File</h3>
+                <div style="display: flex; gap: 0.5rem;">
+                    <label for="file-upload" class="btn btn-primary">
+                        <input type="file" id="file-upload" accept=".svg" style="display:none">
+                        Load SVG
+                    </label>
+                    <button id="btn-save-json" class="btn btn-warning">
+                        📤 JSON
+                    </button>
+                    <button id="btn-download" class="btn btn-success">
+                        💾 SVG
+                    </button>
+                </div>
+            </div>
+
+            <div class="toolbar-section">
+                <h3>🎨 View</h3>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button id="btn-zoom-in" class="btn">🔍 +</button>
+                    <button id="btn-zoom-out" class="btn">🔍 -</button>
+                    <button id="btn-reset-view" class="btn">📐 Fit</button>
+                    <button id="btn-toggle-grid" class="btn">📏 Grid</button>
+                </div>
+            </div>
+
+            <div class="toolbar-section">
+                <h3>⚙️ Devices</h3>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button id="btn-add-device" class="btn btn-primary">
+                        ➕ Add
+                    </button>
+                    <button id="btn-delete-device" class="btn btn-danger">
+                        🗑️ Del
+                    </button>
+                </div>
+            </div>
+
+            <div class="toolbar-section">
+                <h3>↩️ Edit</h3>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button id="btn-undo" class="btn">↩️</button>
+                    <button id="btn-redo" class="btn">↪️</button>
+                    <button id="btn-reset" class="btn btn-danger">🔄 Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Sidebar: Device List -->
+            <div class="sidebar">
+                <h3>📋 Device List</h3>
+                <div id="device-list" class="device-list">
+                    <p class="placeholder">Load an SVG file to start...</p>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h4>⚙️ Grafana Settings</h4>
+                    <input type="text" id="grafana-bucket" placeholder="Bucket (e.g. andon)">
+                    <input type="text" id="grafana-measurement" placeholder="Measurement (e.g. andon_ngis)">
+                </div>
+                
+                <div class="sidebar-section">
+                    <h4>➕ New Device</h4>
+                    <input type="text" id="new-device-id" placeholder="Device ID (e.g. 3665154952)">
+                    <input type="text" id="new-device-name" placeholder="Name (e.g. Machine 1)">
+                    <label style="display: block; margin-top: 0.5rem; color: #999; font-size: 0.8rem;">
+                        Number of Indicators (1-10):
+                    </label>
+                    <input type="number" id="new-device-indicators" 
+                           min="1" max="10" value="5" 
+                           style="margin-top: 0.25rem;">
+                    <button id="btn-create-device" class="btn btn-primary btn-block">
+                        Create
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canvas Area -->
+            <div class="canvas-area">
+                <div id="svg-canvas" class="svg-canvas">
+                    <div class="canvas-placeholder">
+                        <div class="placeholder-content">
+                            <h2>🎨 SVG Editor Ready</h2>
+                            <p>Load an SVG file to start</p>
+                            <label for="file-upload-main" class="btn btn-primary btn-large">
+                                <input type="file" id="file-upload-main" accept=".svg" style="display:none">
+                                📁 Select SVG File
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar: Properties -->
+            <div class="sidebar properties-panel">
+                <h3>🔧 Properties</h3>
+                <div id="properties-content" class="properties-content">
+                    <p class="placeholder">Select a device to view properties</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span id="status-text">Ready</span>
+            <span id="cursor-pos">X: 0, Y: 0</span>
+            <span id="zoom-level">Zoom: 100%</span>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.2.0/dist/svg.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.draggable.js@3.0.2/dist/svg.draggable.min.js"></script>
+    <script>
+        // Warte bis SVG.js geladen ist
+        window.addEventListener('load', function() {
+            if (typeof SVG === 'undefined') {
+                console.error('SVG.js konnte nicht geladen werden!');
+                alert('Fehler: SVG.js Library konnte nicht geladen werden. Bitte Internetverbindung prüfen.');
+            }
+        });
+    </script>
+    <script src="svg-handler.js" defer></script>
+    <script src="editor.js" defer></script>
+    <script src="app.js" defer></script>
+</body>
+</html>
