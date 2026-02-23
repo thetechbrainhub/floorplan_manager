@@ -96,7 +96,7 @@ The new device appears at position (100, 100) and can be dragged to its final po
 
 ### Scaling Devices
 
-- Drag the **teal square handle** at the bottom-right corner of a selected device up or down.
+- Drag the **teal square handle** that sits just outside the bottom-right corner of a selected device up or down.
 - Or edit the **Scale** field (0.5–20) in the properties panel and press Enter.
 
 ### Configuring Indicators
@@ -156,7 +156,8 @@ Import into Grafana via *Dashboards → Import → Upload JSON file*.
 | `Ctrl + Y` | Redo (alternative) |
 | `Delete` | Delete selected device |
 | `Escape` | Deselect current device |
-| Mouse wheel | Zoom canvas in / out |
+| Mouse wheel | Zoom canvas in / out (proportional, smooth on trackpad) |
+| `Shift` + drag | Pan the canvas |
 
 > Keyboard shortcuts are disabled while typing in any input field.
 
@@ -171,6 +172,12 @@ Import into Grafana via *Dashboards → Import → Upload JSON file*.
 ---
 
 ## 📝 Changelog
+
+### v2.2 (February 2026)
+- **Fix:** Fit view now captures only visually coloured/stroked content — invisible ghost elements common in draw.io exports (fill="none", stroke="none") are excluded, so the fit no longer zooms to empty margins
+- **Fix:** Panning with Shift+drag after clicking Fit no longer jumps back to the original unzoomed view — all view state (scale, panX, panY) is now fully consistent through a single transform path
+- **Fix:** Resize handle repositioned flush outside the tile's bottom-right corner instead of overlapping the indicator dots
+- **Improvement:** Mouse-wheel zoom is now proportional to actual scroll distance — smooth and continuous on trackpads, one sensible step per mouse-wheel notch
 
 ### v2.1 (February 2026)
 - **Fix:** Position jump bug — after dragging and scaling, devices no longer snap back to their insert position. Root cause: SVG.js draggable v3 repositions child elements rather than the group transform; position is now consolidated in `dragend` by baking the child offset into the group transform and resetting children to local origin.
