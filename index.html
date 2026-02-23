@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NGIS Floor Plan Editor</title>
+    <title>NGIS Floor Plan Creator</title>
     <!--
     /**
      * NGIS Floorplan Editor
@@ -32,7 +32,7 @@
     <div class="container">
         <!-- Header -->
         <header>
-            <h1>NGIS Floor Plan Editor</h1>
+            <h1>NGIS Floor Plan Creator</h1>
             <p>Edit your floorplan with andon status indicators</p>
         </header>
 
@@ -106,10 +106,10 @@
                     <input type="text" id="new-device-id" placeholder="Device ID (e.g. 3665154952)">
                     <input type="text" id="new-device-name" placeholder="Name (e.g. Machine 1)">
                     <label style="display: block; margin-top: 0.5rem; color: #999; font-size: 0.8rem;">
-                        Number of Indicators (1-10):
+                        Number of Indicators (1-8):
                     </label>
-                    <input type="number" id="new-device-indicators" 
-                           min="1" max="10" value="5" 
+                    <input type="number" id="new-device-indicators"
+                           min="1" max="8" value="5"
                            style="margin-top: 0.25rem;">
                     <button id="btn-create-device" class="btn btn-primary btn-block">
                         Create
@@ -145,8 +145,16 @@
         <!-- Status Bar -->
         <div class="status-bar">
             <span id="status-text">Ready</span>
-            <span id="cursor-pos">X: 0, Y: 0</span>
-            <span id="zoom-level">Zoom: 100%</span>
+            <span class="copyright-info">
+                &copy; 2025 NGIS PTE LTD &nbsp;&middot;&nbsp;
+                <a href="https://www.ng-is.com" target="_blank" rel="noopener noreferrer">www.ng-is.com</a>
+                &nbsp;&middot;&nbsp;
+                <a href="mailto:info@ng-is.com">info@ng-is.com</a>
+            </span>
+            <span class="status-right">
+                <span id="cursor-pos">X: 0, Y: 0</span>
+                <span id="zoom-level">Zoom: 100%</span>
+            </span>
         </div>
     </div>
 

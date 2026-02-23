@@ -6,6 +6,21 @@
  * PROPRIETARY AND CONFIDENTIAL
  */
 
+/** Default OFF-state color (same for all indicators) */
+const INDICATOR_PRESET_OFF_COLOR = '#333333';
+
+/** Default ON-state colors per indicator index (P1–P8) */
+const INDICATOR_PRESET_COLORS = {
+    1: '#00ff00',
+    2: '#ff8800',
+    3: '#ff0000',
+    4: '#0088ff',
+    5: '#ffffff',
+    6: '#ff00ff',
+    7: '#00ffff',
+    8: '#ffff00'
+};
+
 function checkSVGJS() {
     if (typeof SVG === 'undefined') { console.error('SVG.js not loaded!'); return false; }
     return true;
@@ -133,9 +148,9 @@ class SVGHandler {
             if (device.indicators.length > 0)
                 device.scale = device.indicators[0].element.bbox().width / 30;
 
-            const t = group.transform();
-            device.x = t.translateX || 0;
-            device.y = t.translateY || 0;
+            const m = group.node.transform.baseVal.consolidate()?.matrix;
+            device.x = m ? m.e : 0;
+            device.y = m ? m.f : 0;
 
             this.devices.set(deviceId, device);
             this._makeDeviceDraggable(device);
@@ -153,11 +168,15 @@ class SVGHandler {
         for (let i = 1; i <= 8; i++) {
             const el = group.find(`#dev_${deviceId}_p${i}`)[0];
             if (!el) continue;
-            const qa = el.attr('data-query');
+            const qa  = el.attr('data-query');
+            const oca = el.attr('data-off-color');
+            const bla = el.attr('data-blink');
             found.push({
                 id: `dev_${deviceId}_p${i}`, index: i, element: el,
-                color: el.attr('fill') || '#333333',
-                query: (qa && qa !== '' && qa !== 'null') ? parseInt(qa) : null
+                color:    el.attr('fill') || INDICATOR_PRESET_COLORS[i] || '#333333',
+                offColor: (oca && oca !== '' && oca !== 'null') ? oca : INDICATOR_PRESET_OFF_COLOR,
+                blink:    bla === 'true',
+                query:    (qa  && qa  !== '' && qa  !== 'null') ? parseInt(qa) : null
             });
         }
         // Sort by actual Y position so visual order is respected after reload
@@ -167,17 +186,49 @@ class SVGHandler {
 
     // ─── Dragging & Resize ───────────────────────────────────────────────────
 
+    /**
+     * Read the element's actual SVG-space position from the DOM transform matrix.
+     * SVG.js v3 `.transform()` returns a raw Matrix {a,b,c,d,e,f} whose `translateX/Y`
+     * properties are undefined – use `.e` / `.f` (the true translation components)
+     * via the browser's native SVGTransformList instead.
+     */
+    _syncPos(d) {
+        const m = d.element.node.transform.baseVal.consolidate()?.matrix;
+        if (m) { d.x = m.e; d.y = m.f; }
+    }
+
     _makeDeviceDraggable(device) {
         device.element.find('.resize-handle').forEach(h => h.remove());
         device.element.draggable();
 
+        // SVG.js draggable v3 calls el.move(x,y) which repositions the GROUP'S CHILDREN
+        // (x/y attrs on <rect> nodes), NOT the group's own transform attribute.
+        // Visual position = group_translate + child_offset (bbox.x/y in local space).
+
         device.element.on('dragmove', () => {
-            const t = device.element.transform();
-            device.x = t.translateX; device.y = t.translateY;
+            // Keep device.x/y current for the real-time coordinate display
+            const m = device.element.node.transform.baseVal.consolidate()?.matrix;
+            device.x = (m?.e ?? device.x) + (device.element.x() || 0);
+            device.y = (m?.f ?? device.y) + (device.element.y() || 0);
         });
+
         device.element.on('dragend', () => {
-            const t = device.element.transform();
-            device.x = t.translateX; device.y = t.translateY;
+            // True visual position = group translate + current child offset
+            const m  = device.element.node.transform.baseVal.consolidate()?.matrix;
+            const vx = (m?.e ?? device.x) + (device.element.x() || 0);
+            const vy = (m?.f ?? device.y) + (device.element.y() || 0);
+
+            // Consolidate: bake the offset into the group transform, reset children to
+            // local origin so that _syncPos (which reads m.e/m.f) is always accurate.
+            device.element.transform({ translateX: vx, translateY: vy });
+            const sc = device.scale || 1;
+            device.indicators.forEach((ind, arrayIdx) => {
+                ind.element.move(0, arrayIdx * 35 * sc);
+            });
+            this._updateHandlePosition(device);
+
+            device.x = vx;
+            device.y = vy;
             window.dispatchEvent(new CustomEvent('deviceMoved',
                 { detail: { deviceId: device.id, x: device.x, y: device.y } }));
         });
@@ -192,52 +243,54 @@ class SVGHandler {
 
     _addResizeHandle(device) {
         if (device.indicators.length === 0) return;
-        const HS = 10; // handle size (always fixed px)
+        const HS = 28; // handle size in SVG units
 
         const last = device.indicators[device.indicators.length - 1];
         const handle = device.element.rect(HS, HS)
             .fill('#10D1CD').stroke('#ffffff').stroke({ width: 2 }).radius(2)
-            .move(last.element.x() + last.element.width() - HS,
+            .move(Math.max(0, last.element.x() + last.element.width() - HS),
                   last.element.y() + last.element.height() - HS)
             .css({ cursor: 'nwse-resize' }).addClass('resize-handle');
         handle.front();
 
         let isResizing = false, startScale = 1, startY = 0, snapX = 0, snapY = 0;
 
+        // Declare handlers before mousedown so they can reference each other
+        const onMove = (e) => {
+            if (!isResizing) return;
+            const ns = Math.max(0.5, Math.min(20, startScale + (e.clientY - startY) / 100));
+            this._applyScale(device, ns, handle);
+            device.element.transform({ translateX: snapX, translateY: snapY });
+        };
+        const onUp = () => {
+            if (!isResizing) return;
+            isResizing = false;
+            device.element.transform({ translateX: snapX, translateY: snapY });
+            device.x = snapX; device.y = snapY;
+            device.element.draggable(true);
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup',   onUp);
+            window.dispatchEvent(new CustomEvent('deviceResized',
+                { detail: { deviceId: device.id, scale: device.scale } }));
+        };
+
+        // Add window listeners only for the duration of an active resize
         handle.on('mousedown', (e) => {
             e.stopPropagation();
             isResizing = true;
             startScale = device.scale || 1;
             startY     = e.clientY;
-            const bbox = device.element.bbox();
-            snapX = bbox.x; snapY = bbox.y;
-            device.x = snapX; device.y = snapY;
+            this._syncPos(device);          // read actual position from DOM matrix
+            snapX = device.x; snapY = device.y;
             device.element.draggable(false);
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup',   onUp);
         });
-
-        const onMove = (e) => {
-            if (!isResizing) return;
-            const ns = Math.max(0.5, Math.min(20, startScale + (e.clientY - startY) / 100));
-            this._applyScale(device, ns, handle);
-            device.element.move(snapX, snapY);
-        };
-        const onUp = () => {
-            if (!isResizing) return;
-            isResizing = false;
-            device.element.move(snapX, snapY);
-            device.x = snapX; device.y = snapY;
-            device.element.draggable(true);
-            window.dispatchEvent(new CustomEvent('deviceResized',
-                { detail: { deviceId: device.id, scale: device.scale } }));
-        };
-
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup',   onUp);
     }
 
     /** Scale all indicators (in their current visual order) and reposition handle. */
     _applyScale(device, newScale, handle) {
-        const HS = 10;
+        const HS = 28;
         device.scale = newScale;
 
         device.indicators.forEach((ind, arrayIdx) => {
@@ -249,19 +302,18 @@ class SVGHandler {
         const h = handle || device.element.findOne('.resize-handle');
         if (h) {
             const n = device.indicators.length;
-            h.move(30 * newScale - HS, n * 35 * newScale - 5 - HS);
-            h.front();
+            // size() resets handle to fixed HS; y-formula: bottom of last tile = (35n-5)*scale
+            h.size(HS, HS).move(Math.max(0, 30 * newScale - HS), (35 * n - 5) * newScale - HS).front();
         }
     }
 
     _updateHandlePosition(device) {
-        const HS = 10;
+        const HS = 28;
         const h  = device.element.findOne('.resize-handle');
         if (!h || device.indicators.length === 0) return;
-        const last = device.indicators[device.indicators.length - 1];
-        h.move(last.element.x() + last.element.width()  - HS,
-               last.element.y() + last.element.height() - HS);
-        h.front();
+        const sc = device.scale || 1;
+        const n  = device.indicators.length;
+        h.size(HS, HS).move(Math.max(0, 30 * sc - HS), (35 * n - 5) * sc - HS).front();
     }
 
     // ─── CRUD ─────────────────────────────────────────────────────────────────
@@ -275,13 +327,16 @@ class SVGHandler {
 
         const indicators = [];
         for (let i = 1; i <= numIndicators; i++) {
+            const presetColor = INDICATOR_PRESET_COLORS[i] || '#555555';
             const el = group.rect(30, 30)
-                .fill('#333333').stroke('#555555').stroke({ width: 2 }).radius(10)
+                .fill(presetColor).stroke('#555555').stroke({ width: 2 }).radius(10)
                 .move(0, (i - 1) * 35)
                 .attr('id', `dev_${deviceId}_p${i}`)
-                .attr('data-query', '');
+                .attr('data-query', '')
+                .attr('data-off-color', INDICATOR_PRESET_OFF_COLOR)
+                .attr('data-blink', 'false');
             indicators.push({ id: `dev_${deviceId}_p${i}`, index: i, element: el,
-                              color: '#333333', query: null });
+                              color: presetColor, offColor: INDICATOR_PRESET_OFF_COLOR, blink: false, query: null });
         }
 
         group.transform({ translateX: x, translateY: y });
@@ -312,11 +367,9 @@ class SVGHandler {
     updateDeviceScale(deviceId, scale) {
         const d = this.devices.get(deviceId);
         if (!d) return;
-        const bbox = d.element.bbox();
-        const ax = bbox.x, ay = bbox.y;
+        this._syncPos(d);                           // read actual position from DOM matrix
         this._applyScale(d, Math.max(0.5, Math.min(20, scale)));
-        d.x = ax; d.y = ay;
-        d.element.move(ax, ay);
+        d.element.transform({ translateX: d.x, translateY: d.y });
     }
 
     updateDeviceName(deviceId, newName) {
@@ -349,6 +402,22 @@ class SVGHandler {
         ind.element.fill(color); ind.color = color;
     }
 
+    updateIndicatorBlink(deviceId, indicatorIndex, blink) {
+        const d   = this.devices.get(deviceId);
+        const ind = d?.indicators.find(i => i.index === indicatorIndex);
+        if (!ind) return;
+        ind.blink = blink;
+        ind.element.attr('data-blink', String(blink));
+    }
+
+    updateIndicatorOffColor(deviceId, indicatorIndex, offColor) {
+        const d   = this.devices.get(deviceId);
+        const ind = d?.indicators.find(i => i.index === indicatorIndex);
+        if (!ind) return;
+        ind.offColor = offColor;
+        ind.element.attr('data-off-color', offColor);
+    }
+
     updateIndicatorQuery(deviceId, indicatorIndex, queryNum) {
         const d   = this.devices.get(deviceId);
         const ind = d?.indicators.find(i => i.index === indicatorIndex);
@@ -365,30 +434,35 @@ class SVGHandler {
         const d = this.devices.get(deviceId);
         if (!d) return;
 
-        const bbox = d.element.bbox();
-        const ax = bbox.x, ay = bbox.y;
+        this._syncPos(d);                           // read actual position from DOM matrix
         const sc = d.scale || 1;
 
         // Snapshot existing data
         const snap = {};
-        d.indicators.forEach(ind => { snap[ind.index] = { color: ind.color, query: ind.query }; ind.element.remove(); });
+        d.indicators.forEach(ind => { snap[ind.index] = { color: ind.color, offColor: ind.offColor, blink: ind.blink, query: ind.query }; ind.element.remove(); });
         d.indicators = [];
         d.element.find('.resize-handle').forEach(h => h.remove());
 
         selectedIndices.forEach((pIndex, arrayIdx) => {
-            const prev = snap[pIndex] || {};
-            const id   = `dev_${deviceId}_p${pIndex}`;
-            const el   = d.element.rect(30 * sc, 30 * sc)
-                .fill(prev.color || '#333333')
+            const prev         = snap[pIndex] || {};
+            const defaultColor = INDICATOR_PRESET_COLORS[pIndex] || '#555555';
+            const color        = prev.color    || defaultColor;
+            const offColor     = prev.offColor || INDICATOR_PRESET_OFF_COLOR;
+            const blink        = prev.blink    || false;
+            const id           = `dev_${deviceId}_p${pIndex}`;
+            const el           = d.element.rect(30 * sc, 30 * sc)
+                .fill(color)
                 .stroke('#555555').stroke({ width: 2 })
                 .radius(10 * sc).move(0, arrayIdx * 35 * sc)
                 .attr('id', id)
-                .attr('data-query', prev.query != null ? prev.query : '');
+                .attr('data-query',     prev.query != null ? prev.query : '')
+                .attr('data-off-color', offColor)
+                .attr('data-blink',     String(blink));
             d.indicators.push({ id, index: pIndex, element: el,
-                                 color: prev.color || '#333333', query: prev.query ?? null });
+                                 color, offColor, blink, query: prev.query ?? null });
         });
 
-        d.x = ax; d.y = ay; d.element.move(ax, ay);
+        d.element.transform({ translateX: d.x, translateY: d.y });
         this._addResizeHandle(d);
     }
 
@@ -401,8 +475,7 @@ class SVGHandler {
         const d = this.devices.get(deviceId);
         if (!d) return;
 
-        const bbox = d.element.bbox();
-        const ax = bbox.x, ay = bbox.y;
+        this._syncPos(d);                           // read actual position from DOM matrix
         const sc = d.scale || 1;
 
         orderedIndices.forEach((pIndex, arrayIdx) => {
@@ -415,7 +488,7 @@ class SVGHandler {
             .map(p => d.indicators.find(i => i.index === p))
             .filter(Boolean);
 
-        d.x = ax; d.y = ay; d.element.move(ax, ay);
+        d.element.transform({ translateX: d.x, translateY: d.y });
         this._updateHandlePosition(d);
     }
 

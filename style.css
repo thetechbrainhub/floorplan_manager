@@ -253,6 +253,8 @@ header p {
 
 /* ===== PROPERTIES PANEL ===== */
 .properties-panel {
+    width: 340px;
+    padding: 1rem;
     border-right: none;
     border-left: 2px solid #3d3d3d;
 }
@@ -265,7 +267,7 @@ header p {
 
 .property-group {
     background: #3d3d3d;
-    padding: 1rem;
+    padding: 0.75rem;
     border-radius: 6px;
 }
 
@@ -378,13 +380,39 @@ input[type="color"] {
 
 /* ===== STATUS BAR ===== */
 .status-bar {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.5rem 2rem;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0.4rem 2rem;
     background: #2d2d2d;
     border-top: 2px solid #3d3d3d;
     font-size: 0.875rem;
     color: #888;
+}
+
+.copyright-info {
+    font-size: 0.72rem;
+    color: #555;
+    text-align: center;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+}
+
+.copyright-info a {
+    color: #10D1CD;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.copyright-info a:hover {
+    color: #1BE5E1;
+    text-decoration: underline;
+}
+
+.status-right {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: flex-end;
 }
 
 /* ===== SVG STYLES ===== */
@@ -450,15 +478,21 @@ input[type="color"] {
     .sidebar {
         width: 240px;
     }
+    .properties-panel {
+        width: 310px;
+    }
 }
 
 @media (max-width: 768px) {
     .toolbar {
         padding: 0.5rem 1rem;
     }
-    
+
     .sidebar {
         width: 200px;
         padding: 1rem;
+    }
+    .properties-panel {
+        width: 290px;
     }
 }

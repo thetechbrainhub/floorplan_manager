@@ -82,8 +82,10 @@ class Editor {
     updateDevicePosition(deviceId, x, y)       { this.saveState(); this.svgHandler.updateDevicePosition(deviceId, x, y); }
     updateDeviceScale(deviceId, scale)           { this.saveState(); this.svgHandler.updateDeviceScale(deviceId, scale); }
     updateDeviceName(deviceId, newName)          { this.saveState(); this.svgHandler.updateDeviceName(deviceId, newName); }
-    updateIndicatorColor(deviceId, idx, color)   { this.saveState(); this.svgHandler.updateIndicatorColor(deviceId, idx, color); }
-    updateIndicatorQuery(deviceId, idx, queryNum){ this.saveState(); this.svgHandler.updateIndicatorQuery(deviceId, idx, queryNum); }
+    updateIndicatorColor(deviceId, idx, color)      { this.saveState(); this.svgHandler.updateIndicatorColor(deviceId, idx, color); }
+    updateIndicatorOffColor(deviceId, idx, offColor){ this.saveState(); this.svgHandler.updateIndicatorOffColor(deviceId, idx, offColor); }
+    updateIndicatorBlink(deviceId, idx, blink)      { this.saveState(); this.svgHandler.updateIndicatorBlink(deviceId, idx, blink); }
+    updateIndicatorQuery(deviceId, idx, queryNum)   { this.saveState(); this.svgHandler.updateIndicatorQuery(deviceId, idx, queryNum); }
     updateDeviceIndicatorCount(deviceId, count)  { this.saveState(); this.svgHandler.updateDeviceIndicatorCount(deviceId, count); }
     updateDeviceIndicators(deviceId, indices)    { this.saveState(); this.svgHandler.updateDeviceIndicators(deviceId, indices); }
     reorderDeviceIndicators(deviceId, order)     { this.saveState(); this.svgHandler.reorderDeviceIndicators(deviceId, order); }
@@ -125,9 +127,11 @@ class Editor {
                 scale: d.scale || 1,                        // ← FIXED: was missing
                 // indicators in current visual order (array order = visual order)
                 indicators: d.indicators.map(i => ({
-                    index: i.index,
-                    color: i.color,
-                    query: i.query
+                    index:    i.index,
+                    color:    i.color,
+                    offColor: i.offColor || '#333333',
+                    blink:    i.blink   || false,
+                    query:    i.query
                 }))
             }))
         };
@@ -137,15 +141,17 @@ class Editor {
         this.svgHandler.getDevices().forEach(d => this.svgHandler.deleteDevice(d.id));
 
         state.devices.forEach(dd => {
-            const device = this.svgHandler.createDevice(dd.id, dd.name, dd.x, dd.y, 0);
+            this.svgHandler.createDevice(dd.id, dd.name, dd.x, dd.y, 0);
 
             // Rebuild indicators in saved order
             const orderedIndices = dd.indicators.map(i => i.index);
             this.svgHandler.updateDeviceIndicators(dd.id, orderedIndices);
 
-            // Restore colors and queries
+            // Restore colors, blink and queries
             dd.indicators.forEach(i => {
                 this.svgHandler.updateIndicatorColor(dd.id, i.index, i.color);
+                if (i.offColor) this.svgHandler.updateIndicatorOffColor(dd.id, i.index, i.offColor);
+                if (i.blink)    this.svgHandler.updateIndicatorBlink(dd.id, i.index, i.blink);
                 if (i.query != null) this.svgHandler.updateIndicatorQuery(dd.id, i.index, i.query);
             });
 

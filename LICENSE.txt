@@ -1,7 +1,7 @@
 PROPRIETARY SOFTWARE LICENSE
 
 NGIS Floorplan Editor
-Copyright (c) 2025 NGIS PTE LTD. All rights reserved.
+Copyright (c) 2025–2026 NGIS PTE LTD. All rights reserved.
 
 Author: Christian Zeh
 Contact: info@ng-is.com
@@ -61,4 +61,4 @@ For licensing inquiries, please contact:
 NGIS PTE LTD
 Email: info@ng-is.com
 
-Last Updated: January 2025
+Last Updated: February 2026
