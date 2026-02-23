@@ -14,6 +14,12 @@
     const HASH        = 'eea85c897fa91bdbc84b4150544048b8f62c875cca78f26f8d011dfb9c3665c9';
     const SESSION_KEY = 'ngis_auth_v1';
 
+    // Logout button — always wired up so it works after a page reload with active session.
+    document.getElementById('btn-logout')?.addEventListener('click', () => {
+        sessionStorage.removeItem(SESSION_KEY);
+        location.reload();
+    });
+
     const overlay = document.getElementById('auth-overlay');
 
     // Already authenticated this browser session — remove overlay immediately.
