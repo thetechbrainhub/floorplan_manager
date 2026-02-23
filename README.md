@@ -173,6 +173,11 @@ Import into Grafana via *Dashboards → Import → Upload JSON file*.
 
 ## 📝 Changelog
 
+### v2.3 (February 2026)
+- **New:** Password-protected login overlay — SHA-256 hash verified via Web Crypto API; session persists for the browser tab lifetime (sessionStorage)
+- **UI:** Login screen redesigned as a glassmorphism overlay — the app content behind is visible but blurred (`backdrop-filter: blur`), frosted-glass card with teal accent badge, animated entrance
+- **New:** Logout button in the toolbar (far right) — clears the session and returns to the login screen
+
 ### v2.2 (February 2026)
 - **Fix:** Fit view now captures only visually coloured/stroked content — invisible ghost elements common in draw.io exports (fill="none", stroke="none") are excluded, so the fit no longer zooms to empty margins
 - **Fix:** Panning with Shift+drag after clicking Fit no longer jumps back to the original unzoomed view — all view state (scale, panX, panY) is now fully consistent through a single transform path
