@@ -29,6 +29,22 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Auth Overlay — visible by default; auth.js removes it after successful login -->
+    <div id="auth-overlay">
+        <div class="auth-brand">
+            <h1>NGIS Floor Plan Creator</h1>
+            <p>Enter your password to continue</p>
+        </div>
+        <div class="auth-box">
+            <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password">
+            <button id="auth-submit" class="btn btn-primary" style="width:100%; padding:0.75rem; font-size:1rem; margin-top:0.25rem;">
+                Login
+            </button>
+            <p id="auth-error"></p>
+        </div>
+        <p class="auth-footer">&copy; 2025–2026 NGIS PTE LTD</p>
+    </div>
+
     <div class="container">
         <!-- Header -->
         <header>
@@ -172,6 +188,7 @@
             }
         });
     </script>
+    <script src="auth.js" defer></script>
     <script src="svg-handler.js" defer></script>
     <script src="editor.js" defer></script>
     <script src="app.js" defer></script>
