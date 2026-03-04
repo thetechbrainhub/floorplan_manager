@@ -59,15 +59,25 @@ Press `Ctrl + C` in the terminal.
 ## ✨ Features
 
 - **Load SVG** – import existing floorplans, auto-fitted to screen
+
 - **Add Devices** – create andon status indicator groups (P1–P8)
+
 - **Drag & Drop** – position devices visually on the canvas
+
 - **Resize** – drag the teal handle (bottom-right of device) or enter scale manually (0.5–20)
+
 - **Indicator Reordering** – drag rows or use ▲▼ to change the visual stack order of P-indicators independently from their P-number/query assignment
+
 - **ON / OFF Colors** – set individual on-state and off-state colors per indicator
+
 - **Blink** – enable blinking for any indicator when in ON state
+
 - **Undo / Redo** – full history (50 steps), including scale and indicator order
+
 - **Save SVG** – export the edited floorplan (resize handles stripped automatically)
+
 - **Save JSON** – export a ready-to-import Grafana dashboard with Flux queries and ACE.SVG mappings
+
 - **Reset** – clear the workspace and start fresh
 
 ---
@@ -91,6 +101,7 @@ The new device appears at position (100, 100) and can be dragged to its final po
 ### Selecting & Moving Devices
 
 - **Click** on any device tile in the canvas to select it — the right panel shows its properties.
+
 - **Drag** the device to reposition it. The position is committed when you release the mouse button.
 - Alternatively, edit **X** and **Y** directly in the properties panel and press Enter.
 
@@ -173,34 +184,59 @@ Import into Grafana via *Dashboards → Import → Upload JSON file*.
 
 ## 📝 Changelog
 
-### v2.3.1 (March 2026)- **Fix:** Grafana query template now uses `v.timeRangeStart` and `v.timeRangeStop` instead of the hardcoded `-1y` range. The previous hardcoded range caused InfluxDB to scan up to one year of data on every dashboard load, resulting in slow query performance (high CPU on the InfluxDB container) and long page load times. Queries now respect the Grafana timepicker, so data volume — and therefore query cost — scales with the selected time window.### v2.3 (February 2026)
+### v2.3.1 (March 2026)
+- **Fix:** Grafana query template now uses `v.timeRangeStart` and `v.timeRangeStop` instead of the hardcoded `-1y` range. The previous hardcoded range caused InfluxDB to scan up to one year of data on every dashboard load, resulting in slow query performance (high CPU on the InfluxDB container) and long page load times. Queries now respect the Grafana timepicker, so data volume — and therefore query cost — scales with the selected time window.
+
+### v2.3 (February 2026)
+
 - **New:** Password-protected login overlay — SHA-256 hash verified via Web Crypto API; session persists for the browser tab lifetime (sessionStorage)
+
 - **UI:** Login screen redesigned as a glassmorphism overlay — the app content behind is visible but blurred (`backdrop-filter: blur`), frosted-glass card with teal accent badge, animated entrance
+
 - **New:** Logout button in the toolbar (far right) — clears the session and returns to the login screen
 
 ### v2.2 (February 2026)
+
 - **Fix:** Fit view now captures only visually coloured/stroked content — invisible ghost elements common in draw.io exports (fill="none", stroke="none") are excluded, so the fit no longer zooms to empty margins
+
 - **Fix:** Panning with Shift+drag after clicking Fit no longer jumps back to the original unzoomed view — all view state (scale, panX, panY) is now fully consistent through a single transform path
+
 - **Fix:** Resize handle repositioned flush outside the tile's bottom-right corner instead of overlapping the indicator dots
+
 - **Improvement:** Mouse-wheel zoom is now proportional to actual scroll distance — smooth and continuous on trackpads, one sensible step per mouse-wheel notch
+
 - **UI:** Version number displayed in the status bar footer; `APP_VERSION` in `svg-handler.js` is the single source of truth
 
 ### v2.1 (February 2026)
+
 - **Fix:** Position jump bug — after dragging and scaling, devices no longer snap back to their insert position. Root cause: SVG.js draggable v3 repositions child elements rather than the group transform; position is now consolidated in `dragend` by baking the child offset into the group transform and resetting children to local origin.
+
 - **Fix:** ▲▼ indicator buttons no longer clipped in the properties panel (`overflow:hidden` → `overflow:visible` on indicator rows)
+
 - **UI:** Properties panel widened and padding tuned for comfortable display of all indicator controls
+
 - **UI:** Indicator row layout refined — all 9 controls (handle, color dots, P-label, ON/OFF pickers, reset, blink, ▲▼) fully visible without horizontal scrolling
 
 ### v2 (2025)
+
 - **New:** Indicator reordering – drag rows or use ▲▼ to change the visual stack order per device, independent of P-number assignment
+
 - **New:** OFF-state color picker per indicator
+
 - **New:** Blink toggle per indicator (⚡ = blinking when ON, ◼ = solid)
+
 - **New:** Indicator visual order saved and restored in Undo/Redo history
+
 - **Fix:** `updateDeviceId` now uses the real P-number (not array index) when renaming indicator IDs — previously caused wrong IDs after checkbox-based selection
+
 - **Fix:** `captureState` / `restoreState` now saves and restores device scale — scale was silently lost on Undo/Redo
+
 - **Fix:** Grafana JSON Flux query field filter was hardcoded to `P[1-5]`; now dynamically built from the actual P-indices in use (e.g. `P1|P3|P7`)
+
 - **Fix:** Delete key no longer fires while typing in input fields
+
 - **UI:** Indicator rows in properties panel no longer overflow/overlap in narrow sidebar
+
 - **UI:** "Drag or use ▲▼" hint moved to its own line below the section header
 
 ### v1 (2025)
