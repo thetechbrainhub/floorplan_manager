@@ -126,14 +126,14 @@ class App {
             const REFS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             const targets = devices.map((d, idx) => {
                 const query = `device_times = from(bucket: "${bucket}")
-  |> range(start: -1y)
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
   |> filter(fn: (r) => r._measurement == "${measurement}")
   |> filter(fn: (r) => r._field == "from")
   |> filter(fn: (r) => r._value == ${d.id})
   |> keep(columns: ["_time"])
 
 all_params = from(bucket: "${bucket}")
-  |> range(start: -1y)
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
   |> filter(fn: (r) => r._measurement == "${measurement}")
   |> filter(fn: (r) => r._field =~ /^(${pFieldPattern})$/)
 

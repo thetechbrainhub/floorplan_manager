@@ -173,7 +173,7 @@ Import into Grafana via *Dashboards → Import → Upload JSON file*.
 
 ## 📝 Changelog
 
-### v2.3 (February 2026)
+### v2.3.1 (March 2026)- **Fix:** Grafana query template now uses `v.timeRangeStart` and `v.timeRangeStop` instead of the hardcoded `-1y` range. The previous hardcoded range caused InfluxDB to scan up to one year of data on every dashboard load, resulting in slow query performance (high CPU on the InfluxDB container) and long page load times. Queries now respect the Grafana timepicker, so data volume — and therefore query cost — scales with the selected time window.### v2.3 (February 2026)
 - **New:** Password-protected login overlay — SHA-256 hash verified via Web Crypto API; session persists for the browser tab lifetime (sessionStorage)
 - **UI:** Login screen redesigned as a glassmorphism overlay — the app content behind is visible but blurred (`backdrop-filter: blur`), frosted-glass card with teal accent badge, animated entrance
 - **New:** Logout button in the toolbar (far right) — clears the session and returns to the login screen
